@@ -42,13 +42,16 @@ FIND_PACKAGE(OpenCL)
 # dependencies
 FIND_PACKAGE(OpenCV REQUIRED)
 
-# OpenCV
-INCLUDE_DIRECTORIES(${OpenCV_INCLUDE_DIR})
+FIND_PACKAGE(libusb REQUIRED)
 
-# LibUSB
-INCLUDE_DIRECTORIES("${MY_DIR}/../../depends/libusb/include/libusb-1.0/")
-LINK_DIRECTORIES("${MY_DIR}/../../depends/libusb/lib/")
+FIND_PACKAGE(TurboJPEG REQUIRED)
 
+FIND_PACKAGE(GLEW REQUIRED)
+
+ADD_DEFINITIONS(-DGLEW_MX)
+
+# Add includes
+INCLUDE_DIRECTORIES(${OpenCV_INCLUDE_DIRS} ${LibUSB_INCLUDE_DIR} ${GLEW_INCLUDE_DIR} ${TJPEG_INCLUDE_DIR})
 IF(ENABLE_OPENGL)
   # GLFW
   SET(BUILD_SHARED_LIBS ON CACHE BOOL "Build shared libraries")
@@ -69,6 +72,7 @@ endif()
 SET(RESOURCES_INC_FILE "${MY_DIR}/src/resources.inc")
 
 SET(SOURCES
+
   src/transfer_pool.cpp
   src/event_loop.cpp
   
@@ -93,10 +97,11 @@ SET(SOURCES
 )
 
 SET(LIBRARIES
-  usb-1.0
   ${OpenCV_LIBS}
-  turbojpeg
+  ${LibUSB_LIBRARIES}
+  ${TJPEG_LIBRARY}
   ${LIBFREENECT2_THREADING_LIBRARIES}
+  ${GLEW_LIBRARY}
 )
 
 SET(RESOURCES

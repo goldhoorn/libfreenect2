@@ -33,19 +33,8 @@ if(WIN32)
 		set(DEFAULT_TJPEG_LIBRARY c:\\libjpeg-turbo64\\lib\\turbojpeg.lib)
 	endif()
 else()
-	if(${CMAKE_SYSTEM_PROCESSOR} STREQUAL "x32")
-		set(DEFAULT_TJPEG_LIBRARY /usr/lib/libturbojpeg.so)
-		
-		if(NOT EXISTS ${DEFAULT_TJPEG_LIBRARY})
-			set(DEFAULT_TJPEG_LIBRARY /opt/libjpeg-turbo/lib64/libturbojpeg.so)
-		endif()
-	else()
-		set(DEFAULT_TJPEG_LIBRARY /usr/lib/libturbojpeg.a)
-
-                if(NOT EXISTS ${DEFAULT_TJPEG_LIBRARY})
-                        set(DEFAULT_TJPEG_LIBRARY /opt/libjpeg-turbo/lib/libturbojpeg.a)
-                endif()
-	endif()
+    find_library(DEFAULT_TJPEG_LIBRARY NAMES libturbojpeg.so libturbojpeg.a
+        HINTS /opt/libjpeg-turbo/lib64/ /opt/libjpeg-turbo/lib/)
 endif()
 
 set(TJPEG_LIBRARY ${DEFAULT_TJPEG_LIBRARY} CACHE PATH

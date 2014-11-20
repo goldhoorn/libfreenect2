@@ -5,7 +5,7 @@
 #
 # GLEW_FOUND
 # GLEW_INCLUDE_DIR
-# GLEW_LIBRARY
+# GLEW_LIBRARIES
 #
 
 include(FindPackageHandleStandardArgs)
@@ -19,7 +19,7 @@ if (WIN32)
             DOC "The directory where GL/glew.h resides" )
 			
     if(ARCH STREQUAL "x86")
-      find_library( GLEW_LIBRARY
+      find_library( GLEW_LIBRARIES
           NAMES
               glew32mx glew32mxs
           PATHS
@@ -27,7 +27,7 @@ if (WIN32)
               "$ENV{GLEW_ROOT_DIR}/lib/Release MX/win32"
               DOC "The GLEW library")
     else()
-      find_library( GLEW_LIBRARY
+      find_library( GLEW_LIBRARIES
           NAMES
               glew32mx glew32mxs
           PATHS
@@ -48,7 +48,7 @@ else(WIN32)
             NO_DEFAULT_PATH
             DOC "The directory where GL/glew.h resides"
     )
-    find_library( GLEW_LIBRARY
+    find_library( GLEW_LIBRARIES
         NAMES
             GLEW glew
         PATHS
@@ -65,7 +65,7 @@ endif ()
 
 find_package_handle_standard_args(GLEW DEFAULT_MSG
     GLEW_INCLUDE_DIR
-    GLEW_LIBRARY
+    GLEW_LIBRARIES
 )
 
 mark_as_advanced( GLEW_FOUND )

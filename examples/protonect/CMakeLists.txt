@@ -1,9 +1,35 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 
+
+function(auto_detect_lib LIBNAME)
+    if(NOT DEFINED ${${LIBNAME}_FOUND})
+        find_package(PkgConfig)
+        if ( PKG_CONFIG_FOUND )
+            string(TOLOWER ${LIBNAME} LOWER_${LIBNAME})
+            pkg_check_modules(${LIBNAME} ${ARGN} ${LOWER_${LIBNAME}})
+            MESSAGE("LIB ${LIBNAME} found and include is in ${${LIBNAME}_INCLUDE_DIRS}")
+        else()
+            MESSAGE("Fallback to non-pkg-config")
+            FIND_PACKAGE(${LIBNAME} ${ARGN})
+        endif()
+    else()
+        MESSAGE("WARNING lib was already known ${LIBNAME} becasue of ${${LIBNAME}_FOUND}")
+    endif()
+
+    if(NOT ${${LIBNAME}_FOUND})
+        MESSAGE("WARNING lib #{LIBNAME} Not found")
+    else()
+    endif()
+
+    MESSAGE("LIB ${LIBNAME} found and include is in ${${LIBNAME}_INCLUDE_DIRS}")
+    #Still include paths because we are assuming FOUND is givern externally
+    INCLUDE_DIRECTORIES(${${LIBNAME}_INCLUDE_DIRS})
+    LINK_DIRECTORIES(${${LIBNAME}_LIBRARY_DIRS})
+endfunction()
+
+
 PROJECT(libfreenect2)
 SET(CMAKE_BUILD_TYPE RelWithDebInfo)
-
-SET(MY_DIR ${libfreenect2_SOURCE_DIR})
 
 OPTION(ENABLE_CXX11 "Enable C++11 support" OFF)
 OPTION(ENABLE_OPENCL "Enable OpenCL support" ON)
@@ -23,7 +49,7 @@ IF(ENABLE_CXX11)
 ENDIF(ENABLE_CXX11)
 
 # additional cmake modules
-LIST(APPEND CMAKE_MODULE_PATH ${MY_DIR}/cmake_modules)
+LIST(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake_modules)
 
 # setup threading
 INCLUDE(SetupLibfreenect2Threading)
@@ -32,27 +58,35 @@ INCLUDE_DIRECTORIES(${LIBFREENECT2_THREADING_INCLUDE_DIR})
 INCLUDE(GenerateResources)
 
 #set the default path for built executables to the "bin" directory
-SET(EXECUTABLE_OUTPUT_PATH ${MY_DIR}/bin)
+SET(EXECUTABLE_OUTPUT_PATH ${CMAKE_CURRENT_SOURCE_DIR}/bin)
 
 #set the default path for built libraries to the "lib" directory
-SET(LIBRARY_OUTPUT_PATH ${MY_DIR}/lib)
+SET(LIBRARY_OUTPUT_PATH ${CMAKE_CURRENT_SOURCE_DIR}/lib)
 
 FIND_PACKAGE(OpenCL)
-
-# dependencies
 FIND_PACKAGE(OpenCV REQUIRED)
-
-FIND_PACKAGE(libusb REQUIRED)
-
 FIND_PACKAGE(TurboJPEG REQUIRED)
 
-FIND_PACKAGE(GLEW REQUIRED)
 
+# dependencies
+auto_detect_lib(LibUsb REQUIRED)
+auto_detect_lib(GLEW REQUIRED)
+auto_detect_lib(GLEWmx REQUIRED)
+auto_detect_lib(GLFW3)
+
+    
 ADD_DEFINITIONS(-DGLEW_MX)
 
+#Our headers include libusb a bit haky, so we need to workaround the given path here
+INCLUDE_DIRECTORIES(${LibUsb_INCLUDEDIR}/libusb-1.0)
+
+
 # Add includes
-INCLUDE_DIRECTORIES(${OpenCV_INCLUDE_DIRS} ${LibUSB_INCLUDE_DIR} ${GLEW_INCLUDE_DIR} ${TJPEG_INCLUDE_DIR})
+#INCLUDE_DIRECTORIES(${OpenCV_INCLUDE_DIRS} ${LibUSB_INCLUDE_DIR} ${GLEW_INCLUDE_DIR} ${TJPEG_INCLUDE_DIR})
 IF(ENABLE_OPENGL)
+
+#Assuming local build witout global deps, ugly to to this automatic but to keep backward compatibiliy
+if(not ${GLFW_FOUND})
   # GLFW
   SET(BUILD_SHARED_LIBS ON CACHE BOOL "Build shared libraries")
   SET(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "Build the GLFW example programs")
@@ -62,14 +96,15 @@ IF(ENABLE_OPENGL)
   ADD_SUBDIRECTORY(${MY_DIR}/../../depends/glfw_src/ ${MY_DIR}/../../depends/glfw)
   INCLUDE_DIRECTORIES(${MY_DIR}/../../depends/glfw_src/include/)
 ENDIF(ENABLE_OPENGL)
+endif()
 
 if(APPLE)
   # libjpeg-turbo
-  INCLUDE_DIRECTORIES("${MY_DIR}/../../depends/libjpeg_turbo/include/")
-  LINK_DIRECTORIES("${MY_DIR}/../../depends/libjpeg_turbo/lib/")
+  INCLUDE_DIRECTORIES("${CMAKE_CURRENT_SOURCE_DIR}/../../depends/libjpeg_turbo/include/")
+  LINK_DIRECTORIES("${CMAKE_CURRENT_SOURCE_DIR}/../../depends/libjpeg_turbo/lib/")
 endif()
 
-SET(RESOURCES_INC_FILE "${MY_DIR}/src/resources.inc")
+SET(RESOURCES_INC_FILE "${CMAKE_CURRENT_SOURCE_DIR}/src/resources.inc")
 
 SET(SOURCES
 
@@ -101,7 +136,8 @@ SET(LIBRARIES
   ${LibUSB_LIBRARIES}
   ${TJPEG_LIBRARY}
   ${LIBFREENECT2_THREADING_LIBRARIES}
-  ${GLEW_LIBRARY}
+  ${GLEW_LIBRARIES}
+  ${GLEWmx_LIBRARIES}
 )
 
 SET(RESOURCES
@@ -151,10 +187,10 @@ IF(ENABLE_OPENCL AND OPENCL_FOUND)
 ENDIF(ENABLE_OPENCL AND OPENCL_FOUND)
 
 CONFIGURE_FILE("${MY_DIR}/include/libfreenect2/config.h.in" "${MY_DIR}/include/libfreenect2/config.h" @ONLY)
+GENERATE_RESOURCES(${RESOURCES_INC_FILE} ${CMAKE_CURRENT_SOURCE_DIR} ${RESOURCES})
 
-GENERATE_RESOURCES(${RESOURCES_INC_FILE} ${MY_DIR} ${RESOURCES})
 
-INCLUDE_DIRECTORIES("${MY_DIR}/include")
+INCLUDE_DIRECTORIES("${CMAKE_CURRENT_SOURCE_DIR}/include")
 
 ADD_DEFINITIONS(-DRESOURCES_INC)
 ADD_LIBRARY(freenect2 SHARED ${SOURCES})

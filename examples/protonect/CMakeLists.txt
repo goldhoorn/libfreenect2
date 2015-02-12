@@ -1,11 +1,12 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 
-macro(auto_detect_lib LIBNAME)
-	if(NOT DEFINED ${${LIBNAME}_FOUND})
+macro(auto_detect_lib LIBNAME PKGCONFIGNAME)
+    if(NOT DEFINED ${${LIBNAME}_FOUND})
         if ( PKG_CONFIG_FOUND )
-            string(TOLOWER ${LIBNAME} LOWER_${LIBNAME})
-            pkg_check_modules(${LIBNAME} ${ARGN} ${LOWER_${LIBNAME}})
-            MESSAGE(STATUS "LIB ${LIBNAME} found and include is in ${${LIBNAME}_INCLUDE_DIRS}")
+            pkg_check_modules(${LIBNAME} ${ARGN} ${PKGCONFIGNAME})
+            if(${${LIBNAME}_FOUND})
+                MESSAGE(STATUS "LIB ${LIBNAME} found and include is in ${${LIBNAME}_INCLUDE_DIRS}")
+            endif()
         else(PKG_CONFIG_FOUND)
             #MESSAGE("Fallback to non-pkg-config")
             FIND_PACKAGE(${LIBNAME} ${ARGN})
@@ -53,9 +54,17 @@ SET(LIBRARY_OUTPUT_PATH ${MY_DIR}/lib)
 
 # dependencies
 find_package(PkgConfig)	# try find PKGConfig as it will be used if found
-auto_detect_lib(LibUSB REQUIRED)
-auto_detect_lib(OpenCV REQUIRED)
-auto_detect_lib(TJPEG REQUIRED)
+auto_detect_lib(LibUSB libusb REQUIRED)
+auto_detect_lib(OpenCV opencv REQUIRED)
+FIND_PACKAGE(TJPEG REQUIRED) #does not provide a package-config file
+
+#hack for buggy libusb pkgconfig file
+if(NOT LibUSB_INCLUDE_DIR)
+    find_path(LibUSB_INCLUDE_DIR
+        NAMES libusb.h
+        PATHS /usr/include/libusb-1.0 
+    )
+endif()
 
 # Add includes
 INCLUDE_DIRECTORIES("${MY_DIR}/include" ${LIBFREENECT2_THREADING_INCLUDE_DIR} ${OpenCV_INCLUDE_DIRS} ${LibUSB_INCLUDE_DIR} ${TJPEG_INCLUDE_DIR})
@@ -95,6 +104,7 @@ SET(SOURCES
 
 SET(LIBRARIES
   ${OpenCV_LIBS}
+  ${OpenCV_LIBRARIES}
   ${LibUSB_LIBRARIES}
   ${TJPEG_LIBRARY}
   ${LIBFREENECT2_THREADING_LIBRARIES}
@@ -108,7 +118,7 @@ SET(RESOURCES
 
 
 IF(ENABLE_OPENGL)
-  auto_detect_lib(GLFW)
+  auto_detect_lib(GLFW glfw3)
 	
   #Assuming local build witout global deps, ugly to to this automatic but to keep backward compatibiliy
   if(${GLFW_FOUND} STREQUAL "FALSE")
@@ -121,10 +131,12 @@ IF(ENABLE_OPENGL)
     ADD_SUBDIRECTORY(${MY_DIR}/../../depends/glfw_src/ ${MY_DIR}/../../depends/glfw)
     INCLUDE_DIRECTORIES(${MY_DIR}/../../depends/glfw_src/include/)
   else()
-    INCLUDE_DIRECTORIES(${GLFW_INCLUDE_DIR})
+    INCLUDE_DIRECTORIES(${GLFW_INCLUDE_DIR} ${GLFW_INCLUDE_DIRS})
 
+    LINK_DIRECTORIES(${GLFW_LIBRARY_DIRS})
     LIST(APPEND LIBRARIES
       ${GLFW_LIBRARY}
+      ${GLFW_LIBRARIES}
     )
   endif()
   
@@ -170,6 +182,7 @@ GENERATE_RESOURCES(${RESOURCES_INC_FILE} ${MY_DIR} ${RESOURCES})
 
 ADD_DEFINITIONS(-DRESOURCES_INC)
 ADD_LIBRARY(freenect2 SHARED ${SOURCES})
+MESSAGE("Linking with these libraries: ${LIBRARIES}")
 TARGET_LINK_LIBRARIES(freenect2 ${LIBRARIES})
   
 ADD_EXECUTABLE(Protonect

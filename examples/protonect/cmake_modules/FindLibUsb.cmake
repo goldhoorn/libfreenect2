@@ -14,27 +14,7 @@
 include ( CheckLibraryExists )
 include ( CheckIncludeFile )
 
-find_package ( PkgConfig )
-if ( PKG_CONFIG_FOUND )
-  pkg_check_modules ( PKGCONFIG_LIBUSB libusb )
-endif ( PKG_CONFIG_FOUND )
-
-if ( PKGCONFIG_LIBUSB_FOUND )
-  set ( LibUSB_FOUND ${PKGCONFIG_LIBUSB_FOUND} )
-  set ( LibUSB_INCLUDE_DIR ${PKGCONFIG_LibUSB_INCLUDE_DIR} )
-  foreach ( i ${PKGCONFIG_LIBUSB_LIBRARIES} )
-    find_library ( ${i}_LIBRARY
-      NAMES ${i}
-      PATHS ${PKGCONFIG_LIBUSB_LIBRARY_DIRS}
-    )
-    if ( ${i}_LIBRARY )
-      list ( APPEND LibUSB_LIBRARIES ${${i}_LIBRARY} )
-    endif ( ${i}_LIBRARY )
-    mark_as_advanced ( ${i}_LIBRARY )
-  endforeach ( i )
-
-else ( PKGCONFIG_LIBUSB_FOUND )
-  find_path ( LibUSB_INCLUDE_DIR
+find_path ( LibUSB_INCLUDE_DIR
     NAMES
       libusb.h
     PATHS
@@ -43,27 +23,28 @@ else ( PKGCONFIG_LIBUSB_FOUND )
     PATH_SUFFIXES
       libusb
   )
-  mark_as_advanced ( LibUSB_INCLUDE_DIR )
 
-  if ( ${CMAKE_SYSTEM_NAME} STREQUAL "Windows" )
-    # LibUSB-Win32 binary distribution contains several libs.
-    # Use the lib that got compiled with the same compiler.
-    if ( MSVC )
-      if ( ${CMAKE_SYSTEM_PROCESSOR} STREQUAL "x32" )
-        set ( LibUSB_LIBRARY_PATH_SUFFIX_RELEASE win32/Release/dll )
-		set ( LibUSB_LIBRARY_PATH_SUFFIX_DEBUG win32/Debug/dll )
-      else ()
-        set ( LibUSB_LIBRARY_PATH_SUFFIX_RELEASE x64/Release/dll )
-		set ( LibUSB_LIBRARY_PATH_SUFFIX_DEBUG x64/Debug/dll )
-      endif ()          
-    elseif ( BORLAND )
-      set ( LibUSB_LIBRARY_PATH_SUFFIX lib/bcc )
-    elseif ( CMAKE_COMPILER_IS_GNUCC )
-      set ( LibUSB_LIBRARY_PATH_SUFFIX lib/gcc )
-    endif ( MSVC )
-  endif ( ${CMAKE_SYSTEM_NAME} STREQUAL "Windows" )
+mark_as_advanced ( LibUSB_INCLUDE_DIR )
 
-  find_library ( LibUSB_LIBRARY_RELEASE
+if ( ${CMAKE_SYSTEM_NAME} STREQUAL "Windows" )
+  # LibUSB-Win32 binary distribution contains several libs.
+  # Use the lib that got compiled with the same compiler.
+  if ( MSVC )
+    if ( ${CMAKE_SYSTEM_PROCESSOR} STREQUAL "x32" )
+      set ( LibUSB_LIBRARY_PATH_SUFFIX_RELEASE win32/Release/dll )
+      set ( LibUSB_LIBRARY_PATH_SUFFIX_DEBUG win32/Debug/dll )
+    else ()
+      set ( LibUSB_LIBRARY_PATH_SUFFIX_RELEASE x64/Release/dll )
+      set ( LibUSB_LIBRARY_PATH_SUFFIX_DEBUG x64/Debug/dll )
+    endif ()          
+  elseif ( BORLAND )
+    set ( LibUSB_LIBRARY_PATH_SUFFIX lib/bcc )
+  elseif ( CMAKE_COMPILER_IS_GNUCC )
+    set ( LibUSB_LIBRARY_PATH_SUFFIX lib/gcc )
+  endif ( MSVC )
+endif ( ${CMAKE_SYSTEM_NAME} STREQUAL "Windows" )
+
+find_library ( LibUSB_LIBRARY_RELEASE
     NAMES
       libusb libusb-1.0 usb
     PATHS
@@ -73,7 +54,7 @@ else ( PKGCONFIG_LIBUSB_FOUND )
       ${LibUSB_LIBRARY_PATH_SUFFIX_RELEASE}
   )
   
-  find_library ( LibUSB_LIBRARY_DEBUG
+find_library ( LibUSB_LIBRARY_DEBUG
     NAMES
       libusb libusb-1.0 libusb-1.0d usb
     PATHS
@@ -88,10 +69,9 @@ set (LibUSB_LIBRARIES
 	optimized ${LibUSB_LIBRARY_RELEASE}
 	)
 
-  if ( LibUSB_INCLUDE_DIR AND LibUSB_LIBRARIES )
-    set ( LibUSB_FOUND true )
-  endif ( LibUSB_INCLUDE_DIR AND LibUSB_LIBRARIES )
-endif ( PKGCONFIG_LIBUSB_FOUND )
+if ( LibUSB_INCLUDE_DIR AND LibUSB_LIBRARIES )
+  set ( LibUSB_FOUND 1 )
+endif ( LibUSB_INCLUDE_DIR AND LibUSB_LIBRARIES )
 
 if ( LibUSB_FOUND )
   set ( CMAKE_REQUIRED_INCLUDES "${LibUSB_INCLUDE_DIR}" )

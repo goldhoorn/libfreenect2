@@ -11,7 +11,6 @@
 #  OPENCL_INCLUDE_DIRS  - the OpenCL include directory
 #  OPENCL_LIBRARIES    - link these to use OpenCL
 #
-# WIN32 should work, but is untested
 
 FIND_PACKAGE(PackageHandleStandardArgs)
 

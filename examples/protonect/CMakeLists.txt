@@ -54,8 +54,8 @@ SET(LIBRARY_OUTPUT_PATH ${MY_DIR}/lib)
 
 # dependencies
 find_package(PkgConfig)	# try find PKGConfig as it will be used if found
-auto_detect_lib(LibUSB libusb REQUIRED)
-auto_detect_lib(OpenCV opencv REQUIRED)
+auto_detect_lib(libusb REQUIRED)
+auto_detect_lib(opencv REQUIRED)
 FIND_PACKAGE(TJPEG REQUIRED) #does not provide a package-config file
 
 #hack for buggy libusb pkgconfig file
@@ -118,8 +118,8 @@ SET(RESOURCES
 
 
 IF(ENABLE_OPENGL)
-  auto_detect_lib(GLFW glfw3)
-	
+  auto_detect_lib(GLFW3 REQUIRED)
+  
   #Assuming local build witout global deps, ugly to to this automatic but to keep backward compatibiliy
   if(${GLFW_FOUND} STREQUAL "FALSE")
     # GLFW
@@ -131,11 +131,10 @@ IF(ENABLE_OPENGL)
     ADD_SUBDIRECTORY(${MY_DIR}/../../depends/glfw_src/ ${MY_DIR}/../../depends/glfw)
     INCLUDE_DIRECTORIES(${MY_DIR}/../../depends/glfw_src/include/)
   else()
-    INCLUDE_DIRECTORIES(${GLFW_INCLUDE_DIR} ${GLFW_INCLUDE_DIRS})
+    INCLUDE_DIRECTORIES(${GLFW_INCLUDE_DIRS})
 
     LINK_DIRECTORIES(${GLFW_LIBRARY_DIRS})
     LIST(APPEND LIBRARIES
-      ${GLFW_LIBRARY}
       ${GLFW_LIBRARIES}
     )
   endif()

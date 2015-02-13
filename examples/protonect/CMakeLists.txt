@@ -1,9 +1,10 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 
-macro(auto_detect_lib LIBNAME PKGCONFIGNAME)
+macro(auto_detect_lib LIBNAME)
     if(NOT DEFINED ${${LIBNAME}_FOUND})
         if ( PKG_CONFIG_FOUND )
-            pkg_check_modules(${LIBNAME} ${ARGN} ${PKGCONFIGNAME})
+            string(TOLOWER ${LIBNAME} PKGCONFIGNAME)
+            pkg_check_modules(${LIBNAME} ${PKGCONFIGNAME} ${ARGN})
             if(${${LIBNAME}_FOUND})
                 MESSAGE(STATUS "LIB ${LIBNAME} found and include is in ${${LIBNAME}_INCLUDE_DIRS}")
             endif()
@@ -54,8 +55,8 @@ SET(LIBRARY_OUTPUT_PATH ${MY_DIR}/lib)
 
 # dependencies
 find_package(PkgConfig)	# try find PKGConfig as it will be used if found
-auto_detect_lib(libusb REQUIRED)
-auto_detect_lib(opencv REQUIRED)
+auto_detect_lib(LibUSB REQUIRED)
+auto_detect_lib(OpenCV REQUIRED)
 FIND_PACKAGE(TJPEG REQUIRED) #does not provide a package-config file
 
 #hack for buggy libusb pkgconfig file
@@ -121,7 +122,7 @@ IF(ENABLE_OPENGL)
   auto_detect_lib(GLFW3 REQUIRED)
   
   #Assuming local build witout global deps, ugly to to this automatic but to keep backward compatibiliy
-  if(${GLFW_FOUND} STREQUAL "FALSE")
+  if(${GLFW3_FOUND} STREQUAL "FALSE")
     # GLFW
     SET(BUILD_SHARED_LIBS ON CACHE BOOL "Build shared libraries")
     SET(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "Build the GLFW example programs")
@@ -131,11 +132,11 @@ IF(ENABLE_OPENGL)
     ADD_SUBDIRECTORY(${MY_DIR}/../../depends/glfw_src/ ${MY_DIR}/../../depends/glfw)
     INCLUDE_DIRECTORIES(${MY_DIR}/../../depends/glfw_src/include/)
   else()
-    INCLUDE_DIRECTORIES(${GLFW_INCLUDE_DIRS})
+    INCLUDE_DIRECTORIES(${GLFW3_INCLUDE_DIRS})
 
-    LINK_DIRECTORIES(${GLFW_LIBRARY_DIRS})
+    LINK_DIRECTORIES(${GLFW3_LIBRARY_DIRS})
     LIST(APPEND LIBRARIES
-      ${GLFW_LIBRARIES}
+      ${GLFW3_LIBRARIES}
     )
   endif()
   

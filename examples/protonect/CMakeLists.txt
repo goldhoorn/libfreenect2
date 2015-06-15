@@ -194,8 +194,9 @@ if(BUILD_SHARED)
     TARGET_LINK_LIBRARIES(Protonect
         freenect2shared
     )
-    CONFIGURE_FILE(freenect2.cmake.in "${PROJECT_BINARY_DIR}/freenect2Config.cmake" @ONLY)
     INSTALL(TARGETS freenect2shared DESTINATION lib)
+    CONFIGURE_FILE(freenect2.pc.in "${PROJECT_BINARY_DIR}/freenect2.pc" @ONLY)
+    INSTALL(FILES "${PROJECT_BINARY_DIR}/freenect2.pc" DESTINATION lib/pkgconfig/)
 endif()
 
 if(BUILD_STATIC)
@@ -205,6 +206,9 @@ if(BUILD_STATIC)
         set_target_properties(freenect2static PROPERTIES OUTPUT_NAME freenect2static)
     endif()
 endif()
+
+    
+CONFIGURE_FILE(freenect2.cmake.in "${PROJECT_BINARY_DIR}/freenect2Config.cmake" @ONLY)
 
 INSTALL(DIRECTORY "${MY_DIR}/include/" DESTINATION include PATTERN "*.in" EXCLUDE)
 IF(LIBFREENECT2_THREADING_TINYTHREAD)

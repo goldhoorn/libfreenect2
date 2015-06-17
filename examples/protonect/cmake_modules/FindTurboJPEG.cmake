@@ -21,7 +21,7 @@ FIND_PATH(TurboJPEG_INCLUDE_DIRS
 )
 
 FIND_LIBRARY(TurboJPEG_LIBRARIES
-  NAMES libturbojpeg.so.0 turbojpeg.so
+  NAMES libturbojpeg.so.1 libturbojpeg.so.0 turbojpeg.so
   DOC "Found TurboJPEG library path"
   PATHS
     "${DEPENDS_DIR}/libjpeg_turbo"
@@ -37,7 +37,7 @@ FIND_LIBRARY(TurboJPEG_LIBRARIES
 )
 
 FIND_LIBRARY(TurboJPEG_LIBRARIES_STATIC
-  NAMES libturbojpeg.a.0 turbojpeg.a
+  NAMES libturbojpeg.a.1 libturbojpeg.a.0 turbojpeg.a
   DOC "Found TurboJPEG library path"
   PATHS
     "${DEPENDS_DIR}/libjpeg_turbo"
